@@ -10,17 +10,17 @@ import org.bukkit.entity.Player;
 
 public class SnowballerMessager {
 	private static String header = ChatColor.GOLD + "[" + ChatColor.AQUA + "Snow" + ChatColor.DARK_AQUA + "baller" + ChatColor.GOLD + "] ";
-	
+
 	public static void sendMessage(CommandSender target, String message) {
 		String messageBuffer = header + ChatColor.RESET + message;
 		target.sendMessage(messageBuffer);
 	}
-	
+
 	public static void  broadcast(String message) {
 		String messageBuffer = header + ChatColor.RESET + message;
 		Bukkit.getServer().broadcastMessage(messageBuffer);
 	}
-	
+
 	public static void announceToGame(SnowballerGame game, String announcement) {
 		String message = header + ChatColor.RESET + announcement;
 		ArrayList<Player> playersInGame = game.getPlayers();
@@ -30,7 +30,7 @@ public class SnowballerMessager {
 		for(int i = 0; i < spectatorsInGame.size(); ++i)
 			spectatorsInGame.get(i).sendMessage(message);
 	}
-	
+
 	public static String getColoredString(String colorName) {
 		if(colorName.equalsIgnoreCase("blue"))
 			return "§1blue§f";
@@ -38,7 +38,7 @@ public class SnowballerMessager {
 			return "§4red§f";
 		return "default";
 	}
-	
+
 	public static ChatColor getStringColor(String colorName) {
 		if(colorName.equalsIgnoreCase("blue"))
 			return ChatColor.DARK_BLUE;
@@ -46,7 +46,7 @@ public class SnowballerMessager {
 			return ChatColor.DARK_RED;
 		return ChatColor.RESET;
 	}
-	
+
 	public static String formatLocation(Location location) {
 		return "§f(§a" + location.getBlockX() + "§f, §a" + location.getBlockY() + "§f, §a" + location.getBlockZ() + "§f)";
 	}

@@ -4,8 +4,6 @@ import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,7 +12,6 @@ import org.bukkit.entity.Player;
 import cokoc.snowballer.Snowballer;
 import cokoc.snowballer.game.SnowballerGame;
 import cokoc.snowballer.game.SnowballerMessager;
-import cokoc.snowballer.game.SnowballerVanisher;
 
 import com.google.gson.internal.Pair;
 
@@ -44,6 +41,10 @@ public class SnowCommandExecutor implements CommandExecutor {
 				SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "You need to be a player to run this command.");
 				return true;
 			} Player senderPlayer = (Player) sender;
+			if(Snowballer.gamesManager.isPlayerInGame(senderPlayer)) {
+				SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Can't spectate when in game.");
+				return true;
+			}
 			if(args.length == 1) {
 				String gameHost = args[0];
 				if(Snowballer.gamesManager.getGameByHost(gameHost) == null) {
@@ -51,20 +52,10 @@ public class SnowCommandExecutor implements CommandExecutor {
 					return true;
 				} else {
 					SnowballerGame game = Snowballer.gamesManager.getGameByHost(gameHost);
-					Location tpLocation = senderPlayer.getLocation();
-					if(! game.getTerrain().hasSpawns("spectator")) {
-						tpLocation = game.getTerrain().getRandomSpawnPoint("red");
-					} else {
-						SnowballerMessager.sendMessage(sender, "There are no registred spawns for spectators, teleporting to team spawns.");
-						tpLocation = game.getTerrain().getRandomSpawnPoint("red");
-					} 
-					game.addSpectator(senderPlayer);
-					SnowballerVanisher.vanishToPlayersInGame(senderPlayer, game);
-					senderPlayer.teleport(tpLocation);
-					senderPlayer.setGameMode(GameMode.CREATIVE);
+					Snowballer.gamesManager.playerSpectateGame(senderPlayer, game);
 					Player host = Bukkit.getServer().getPlayer(gameHost);
-					SnowballerMessager.sendMessage(senderPlayer, "You have joined " + host.getDisplayName() + "'s game as spectator.");
-				}
+					SnowballerMessager.sendMessage(senderPlayer, "You have joined " + host.getDisplayName() + "§f's game as spectator.");
+				} return true;
 			} else {
 				if(Snowballer.gamesManager.isPlayerSpectator(senderPlayer)) {
 					Snowballer.gamesManager.playerStopSpectate(senderPlayer);
@@ -73,8 +64,13 @@ public class SnowCommandExecutor implements CommandExecutor {
 				} if(Snowballer.gamesManager.isSpeedball()) {
 					SnowballerGame speedballGame = Snowballer.gamesManager.getGameByHost("Speedball");
 					if(speedballGame != null) {
-						Snowballer.gamesManager.playerSpectateGame(senderPlayer, speedballGame);
-						SnowballerMessager.sendMessage(senderPlayer, "You have joined the §dSpeed§bball§f game as spectator.");
+						if(speedballGame.isRunning()) {
+							Snowballer.gamesManager.playerSpectateGame(senderPlayer, speedballGame);
+							SnowballerMessager.sendMessage(senderPlayer, "You have joined the §dspeed§bball§f game as spectator.");
+						} else {
+							SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "The speedball game isn't going on right now, try again later.");
+							return true;
+						}
 					} else {
 						SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "The speedball game isn't going on right now, try again later.");
 						return true;
@@ -85,8 +81,20 @@ public class SnowCommandExecutor implements CommandExecutor {
 				}
 			}
 			return true;
+		} if(command.getName().equalsIgnoreCase("points")) {
+			if(! (sender instanceof Player)) {
+				SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "You need to be a player to run this command.");
+				return true;
+			} Player senderPlayer = (Player) sender;
+			String playerPointsString = "You currently have §a";
+			int currentPoints = Snowballer.pointsManager.getPlayerPoints(senderPlayer.getName());
+			if(currentPoints == 0)
+				playerPointsString = playerPointsString + currentPoints + "§f point. Play a game to win points!";
+			else
+				playerPointsString = playerPointsString + currentPoints + "§f points.";
+			SnowballerMessager.sendMessage(senderPlayer, playerPointsString);
 		}
-		
+
 		return true;
 	}
 }

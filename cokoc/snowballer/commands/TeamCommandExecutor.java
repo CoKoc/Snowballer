@@ -40,7 +40,7 @@ public class TeamCommandExecutor implements CommandExecutor {
 					ArrayList<SnowballerGame> games = Snowballer.gamesManager.getGamesPlayerIsWaitingIn(player);
 					for(int i = 0; i < games.size(); ++i)
 						Snowballer.gamesManager.playerQuitGameQueue(player, games.get(i));
-					SnowballerMessager.sendMessage(player, "You left the player pool");
+					SnowballerMessager.sendMessage(player, "You left the player pool.");
 				}
 			} else {
 				sender.sendMessage(ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Speedball isn't active.");

@@ -9,6 +9,8 @@ public class SnowballerConfigsManager {
 	private Snowballer plugin;
 	public boolean friendlyFire = false;
 	public boolean speedball = true;
+	public boolean changeNamePlates = false;
+	public long speedballDelay = 10;
 	
 	public SnowballerConfigsManager(Snowballer plugin) {
 		this.plugin = plugin;
@@ -23,5 +25,7 @@ public class SnowballerConfigsManager {
 		FileConfiguration configs = plugin.getConfig();
 		friendlyFire = configs.getBoolean("friendly fire");
 		speedball = configs.getBoolean("speedball");
+		speedballDelay = configs.getLong("speedball delay");
+		changeNamePlates = configs.getBoolean("change name plate");
 	}
 }

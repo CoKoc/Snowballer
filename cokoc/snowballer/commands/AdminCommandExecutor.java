@@ -253,7 +253,15 @@ public class AdminCommandExecutor implements CommandExecutor {
 							SnowballerGame game = Snowballer.gamesManager.getGameByPlayer(player);
 							if(game != null) {
 								int gameId = Snowballer.gamesManager.getGameId(game);
-								if(gameId == -1) {
+								if(gameId != -1) {
+									if(Snowballer.gamesManager.isPlayerSpectator(player)) {
+										SnowballerMessager.sendMessage(sender, SnowballerMessager.getStringColor(game.getPlayerTeam(player))
+												+ player.getName() + "§f is spectating in game ID " + Snowballer.gamesManager.getGameId(game));
+									} else {
+										SnowballerMessager.sendMessage(sender, SnowballerMessager.getStringColor(game.getPlayerTeam(player))
+												+ player.getName() + "§f is playing in game ID " + Snowballer.gamesManager.getGameId(game));
+									}
+								} else {
 									if(Snowballer.gamesManager.getGameById(gameId).isPlayerAwaiting(player)) {
 										ChatColor teamColor = SnowballerMessager.getStringColor(Snowballer.gamesManager.getGameById(gameId).getPlayerTeam(player));
 										SnowballerMessager.sendMessage(sender, player.getName() + " is in player pool with team " 
@@ -261,9 +269,6 @@ public class AdminCommandExecutor implements CommandExecutor {
 									} else {
 										SnowballerMessager.sendMessage(sender, player.getName() + " isn't currently in a game.");
 									}
-								} else {
-									SnowballerMessager.sendMessage(sender, SnowballerMessager.getStringColor(game.getPlayerTeam(player))
-											+ player.getName() + " is in game ID " + Snowballer.gamesManager.getGameId(game));
 								}
 							} else {
 								SnowballerMessager.sendMessage(sender, player.getName() + " isn't currently in a game.");

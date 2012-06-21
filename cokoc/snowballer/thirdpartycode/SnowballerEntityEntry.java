@@ -5,6 +5,8 @@ import java.util.Iterator;
 
 import org.bukkit.entity.Player;
 
+import cokoc.snowballer.managers.SnowballerChangedNamesManager;
+
 import net.minecraft.server.Block;
 import net.minecraft.server.Entity;
 import net.minecraft.server.EntityArrow;
@@ -63,6 +65,7 @@ public class SnowballerEntityEntry extends EntityTrackerEntry {
 		this.f.setAccessible(true);
 	}
 
+	@SuppressWarnings("unchecked")
 	public void updatePlayer(EntityPlayer entityplayer) {
 		if(entityplayer != this.tracker) {
 			double d0 = entityplayer.locX - (double) (this.xLoc / 32);
@@ -76,7 +79,7 @@ public class SnowballerEntityEntry extends EntityTrackerEntry {
 							return;
 						}
 					}
-					
+					this.trackedPlayers.add(entityplayer);
 					entityplayer.netServerHandler.sendPacket(this.b());
 					try {
 						if(f.getBoolean(this))
@@ -93,21 +96,16 @@ public class SnowballerEntityEntry extends EntityTrackerEntry {
 
 					if(this.tracker instanceof EntityHuman) {
 						EntityHuman entityhuman = (EntityHuman)this.tracker;
-
-						if(entityhuman.isSleeping())
-							entityplayer.netServerHandler.sendPacket(new Packet17EntityLocationAction(this.tracker, 0, MathHelper.floor(this.tracker.locX), MathHelper.floor(this.tracker.locY), MathHelper.floor(this.tracker.locZ)));
 						if(entityhuman.isSneaking())
 							entityplayer.netServerHandler.sendPacket(new Packet17EntityLocationAction(this.tracker, 0, MathHelper.floor(this.tracker.locX), MathHelper.floor(this.tracker.locY), MathHelper.floor(this.tracker.locZ)));
 					}
 
 					if(this.tracker instanceof EntityLiving) {
 						EntityLiving entityliving = (EntityLiving) this.tracker;
-						@SuppressWarnings("rawtypes")
-						Iterator iterator = entityliving.getEffects().iterator();
+						Iterator<MobEffect> iterator = entityliving.getEffects().iterator();
 
 						while(iterator.hasNext()) {
 							MobEffect mobeffect = (MobEffect) iterator.next();
-
 							entityplayer.netServerHandler.sendPacket(new Packet41MobEffect(this.tracker.id, mobeffect));
 						}
 					}
@@ -120,9 +118,6 @@ public class SnowballerEntityEntry extends EntityTrackerEntry {
 	}
 
 	private Packet b() {
-		if(this.tracker.dead)
-			System.out.println("Fetching addPacket for removed entity: " + this.tracker.getBukkitEntity().toString());
-
 		if(this.tracker instanceof EntityItem) {
 			EntityItem entityitem = (EntityItem) this.tracker;
 			Packet21PickupSpawn packet21pickupspawn = new Packet21PickupSpawn(entityitem);
@@ -134,8 +129,12 @@ public class SnowballerEntityEntry extends EntityTrackerEntry {
 		}
 		
 		if(this.tracker instanceof EntityPlayer) {
-			EntityPlayer ep = (EntityPlayer)this.tracker;
+			EntityPlayer ep = (EntityPlayer) this.tracker;
 			Packet20NamedEntitySpawn packet20 = new Packet20NamedEntitySpawn(ep);
+			if(SnowballerChangedNamesManager.changedNames.containsKey(ep.name))
+				packet20.b = SnowballerChangedNamesManager.changedNames.get(ep.name);
+			else
+				packet20.b = ep.name;
 			return packet20;
 		}
 		

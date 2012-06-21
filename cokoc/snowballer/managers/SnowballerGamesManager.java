@@ -3,6 +3,7 @@ package cokoc.snowballer.managers;
 import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -15,9 +16,10 @@ import cokoc.snowballer.game.SnowballerVanisher;
 
 public class SnowballerGamesManager {
 	public ArrayList<SnowballerGame> games;
-	private boolean speedballRunning = false;
+	private boolean speedballRunning;
 
 	public SnowballerGamesManager() {
+		speedballRunning = false;
 		games = new ArrayList<SnowballerGame>();
 	}
 
@@ -25,13 +27,13 @@ public class SnowballerGamesManager {
 		games.add(game);
 		if(game.getHost().equalsIgnoreCase("Speedball")) {
 			if(speedballRunning) {
-				SnowballerMessager.broadcast("[§dSpeed§bball§f] Game is starting in 10 seconds!");
-				SnowballerMessager.broadcast("[§dSpeed§bball§f] Type /red or /blue to choose a game.");
 				Snowballer.terrainsManager.setOccupied(getGameByHost("Speedball").getTerrain(), false);
 				SnowballerTerrain newTerrain = Snowballer.terrainsManager.getRandomVacantTerrain();
 				getGameByHost("Speedball").setTerrain(newTerrain);
 				Snowballer.terrainsManager.setOccupied(newTerrain, true);
-
+				long delay = Snowballer.configsManager.speedballDelay;
+				SnowballerMessager.broadcast("[§dSpeed§bball§f] " + delay + " seconds until §a" + game.getTerrain().getName() + "§f!");
+				SnowballerMessager.broadcast("[§dSpeed§bball§f] Type /red or /blue to choose a game.");
 				Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Snowballer.getInstance(), new Runnable() {
 					public void run() {
 						if(speedballRunning) {
@@ -50,22 +52,22 @@ public class SnowballerGamesManager {
 						} else
 							forceStopGame(getGameByHost("Speedball"));
 					}
-				}, 200L);
+				}, (20L * delay));
 			} else
 				forceStopGame(getGameByHost("Speedball"));
 		}
 	}
 
 	public void stopGame(SnowballerGame game) {
+		game.end();
 		if(games.contains(game))
 			games.remove(game);
-		game.end();
 	}
 	
 	public void forceStopGame(SnowballerGame game) {
+		game.forceEnd();
 		if(games.contains(game))
 			games.remove(game);
-		game.forceEnd();
 	}
 
 	public void stopAllGames() {
@@ -84,26 +86,26 @@ public class SnowballerGamesManager {
 
 	public void playerJoinGameQueue(Player player, SnowballerGame game, String team) {
 		playerStopSpectate(player);
+		if(! isPlayerInGame(player))
+			SnowballerChangedNamesManager.setPlayerDisplayName(player, SnowballerMessager.getStringColor(team) + player.getName() + ChatColor.RESET);
 		game.addPlayerToQueue(player, team);
-		if(game.getType().equalsIgnoreCase("speedball")) {
-			player.setDisplayName(SnowballerMessager.getStringColor(team) + player.getName());
-			player.setPlayerListName(player.getDisplayName());
-		}
 	}
 	
 	public void playerQuitGameQueue(Player player, SnowballerGame game) {
-		if(game.isPlayerAwaiting(player))
+		if(game.isPlayerAwaiting(player)) {
 			game.removePlayerFromQueue(player);
-		player.setDisplayName(player.getName());
-		player.setPlayerListName(player.getDisplayName());
+			if(! isPlayerInGame(player))
+				SnowballerChangedNamesManager.setPlayerDisplayName(player, player.getName());
+		}
 	}
 	
 	public void playerSpectateGame(Player player, SnowballerGame game) {
 		playerStopSpectate(player);
+		SnowballerMessager.announceToGame(game, player.getName() + "§f joined your game as spectator.");
 		game.addSpectator(player);
 		SnowballerVanisher.vanishToPlayersInGame(player, game);
 		Location tpLocation = player.getLocation();
-		if(! game.getTerrain().hasSpawns("spectator")) {
+		if(game.getTerrain().hasSpawns("spectator")) {
 			tpLocation = game.getTerrain().getRandomSpawnPoint("spectator");
 		} else {
 			SnowballerMessager.sendMessage(player, "There are no registred spawns for spectators, teleporting to team spawns.");
@@ -116,7 +118,6 @@ public class SnowballerGamesManager {
 	
 	public void playerStopSpectate(Player player) {
 		if(isPlayerSpectator(player)) {
-			SnowballerVanisher.appearToPlayersInGame(player, getGameByPlayer(player));
 			player.teleport(Snowballer.terrainsManager.getHubSpawn());
 			player.setGameMode(GameMode.SURVIVAL);
 			getGameByPlayer(player).removeSpectator(player);
@@ -136,6 +137,13 @@ public class SnowballerGamesManager {
 				return true;
 		} return false;
 	}
+	
+	public boolean isPlayerAwaiting(Player player) {
+		for(int i = 0; i < games.size(); ++i) {
+			if(games.get(i).isPlayerAwaiting(player))
+				return true;
+		} return false;
+	}
 
 	public String getPlayerTeamInGame(Player player) {
 		return getGameByPlayer(player).getPlayerTeam(player);
@@ -143,10 +151,10 @@ public class SnowballerGamesManager {
 
 	public SnowballerGame getGameByPlayer(Player player) {
 		for(int i = 0; i < games.size(); ++i)
-			if(games.get(i).isPlayerInGame(player))
+			if(games.get(i).isPlayerSpectator(player))
 				return games.get(i);
 		for(int i = 0; i < games.size(); ++i)
-			if(games.get(i).isPlayerSpectator(player))
+			if(games.get(i).isPlayerInGame(player))
 				return games.get(i);
 		return null;
 	}

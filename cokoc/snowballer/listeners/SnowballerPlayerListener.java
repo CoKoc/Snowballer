@@ -9,9 +9,9 @@ import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -19,16 +19,22 @@ import cokoc.snowballer.Snowballer;
 import cokoc.snowballer.game.SnowballerGame;
 import cokoc.snowballer.game.SnowballerInventorySetter;
 import cokoc.snowballer.game.SnowballerMessager;
+import cokoc.snowballer.game.SnowballerVanisher;
+import cokoc.snowballer.managers.SnowballerChangedNamesManager;
 import cokoc.snowballer.managers.SnowballerGamesManager;
 
 public class SnowballerPlayerListener implements Listener {
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onSnowballHit(EntityDamageByEntityEvent event) {
-		if(! event.getCause().equals(DamageCause.PROJECTILE))
+		if(! event.getCause().equals(DamageCause.PROJECTILE)) {
+			event.setCancelled(true);
 			return;
+		}
 		
-		if(! event.getDamager().getType().equals(EntityType.SNOWBALL))
+		if(! event.getDamager().getType().equals(EntityType.SNOWBALL)) {
+			event.setCancelled(true);
 			return;
+		}
 		
 		Snowball snowball = (Snowball) event.getDamager();
 		if(! (snowball.getShooter() instanceof Player))
@@ -59,41 +65,45 @@ public class SnowballerPlayerListener implements Listener {
 		game.killPlayer(targetPlayer, shooterPlayer);
 	}
 	
-	@EventHandler
-	public void onDamage(EntityDamageEvent event) {
-		if(event.getEntity() instanceof Player) {
-			event.setCancelled(true);
-		}
-	}
-	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
 		ArrayList<SnowballerGame> games = Snowballer.gamesManager.getGamesPlayerIsWaitingIn(player);
 		for(int i = 0; i < games.size(); ++i)
 			Snowballer.gamesManager.playerQuitGameQueue(player, games.get(i));
-		if(Snowballer.gamesManager.isPlayerInGame(player))
-			Snowballer.gamesManager.getGameByPlayer(player).removePlayer(player);
-		if(Snowballer.gamesManager.isPlayerSpectator(player))
+		if(Snowballer.gamesManager.isPlayerInGame(player)) {
+			SnowballerGame game = Snowballer.gamesManager.getGameByPlayer(player);
+			game.removePlayer(player);
+			game.checkWin();
+		} if(Snowballer.gamesManager.isPlayerSpectator(player))
 			Snowballer.gamesManager.getGameByPlayer(player).removeSpectator(player);
 		SnowballerInventorySetter.setInventory(player, "default");
-		player.setDisplayName(player.getName());
-		player.setPlayerListName(player.getDisplayName());
+		SnowballerChangedNamesManager.setPlayerDisplayName(player, player.getName());
+		SnowballerVanisher.playerSeeAllPlayers(player);
 		player.teleport(Snowballer.terrainsManager.getHubSpawn());
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onPlayerFoodLevelChange(FoodLevelChangeEvent event) {
 		if(event.getEntity() instanceof Player) {
 			event.setCancelled(true);
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onPlayerDropSnowball(PlayerDropItemEvent event) {
 		if(event.getItemDrop().getItemStack().getType().equals(Material.SNOW_BALL)) {
 			SnowballerMessager.sendMessage(event.getPlayer(), "You can't drop snowballs!");
 			event.setCancelled(true);
+		}
+	}
+	
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerThrowWhileSpectating(ProjectileLaunchEvent event) {
+		if(event.getEntity().getShooter() instanceof Player) {
+			Player player = (Player) event.getEntity().getShooter();
+			if(Snowballer.gamesManager.isPlayerSpectator(player))
+				event.setCancelled(true);
 		}
 	}
 }

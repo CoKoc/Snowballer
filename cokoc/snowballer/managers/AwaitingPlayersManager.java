@@ -52,7 +52,7 @@ public class AwaitingPlayersManager {
 	}
 	
 	public String getPlayerTeam(Player player) {
-		if(players.containsKey(player.getName()))
+		if(isAwaiting(player))
 			return players.get(player.getName());
 		return "default";
 	}
