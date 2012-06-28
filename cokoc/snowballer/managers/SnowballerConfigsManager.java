@@ -10,6 +10,7 @@ public class SnowballerConfigsManager {
 	public boolean friendlyFire = false;
 	public boolean speedball = true;
 	public boolean changeNamePlates = false;
+	public boolean invinciblePlayers = true;
 	public long speedballDelay = 10;
 	
 	public SnowballerConfigsManager(Snowballer plugin) {
@@ -27,5 +28,6 @@ public class SnowballerConfigsManager {
 		speedball = configs.getBoolean("speedball");
 		speedballDelay = configs.getLong("speedball delay");
 		changeNamePlates = configs.getBoolean("change name plate");
+		invinciblePlayers = configs.getBoolean("invicible players");
 	}
 }

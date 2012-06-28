@@ -8,6 +8,7 @@ import net.minecraft.server.Packet20NamedEntitySpawn;
 import net.minecraft.server.Packet29DestroyEntity;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -18,10 +19,10 @@ public class SnowballerChangedNamesManager {
 	public static HashMap<String, String> changedNames = new HashMap<String, String>();
 
 	public static void setPlayerDisplayName(Player player, String name) {
-		player.setDisplayName(name);
+		player.setDisplayName(name + ChatColor.RESET);
 		setPlayerListName(player);
 		if(Snowballer.configsManager.changeNamePlates)
-			setNamePlate(player, player.getDisplayName());
+			setNamePlate(player, player.getDisplayName() + ChatColor.RESET);
 	}
 
 	private static void setNamePlate(Player player, String plateName) {

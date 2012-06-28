@@ -89,10 +89,16 @@ public class SnowCommandExecutor implements CommandExecutor {
 			String playerPointsString = "You currently have §a";
 			int currentPoints = Snowballer.pointsManager.getPlayerPoints(senderPlayer.getName());
 			if(currentPoints == 0)
-				playerPointsString = playerPointsString + currentPoints + "§f point. Play a game to win points!";
+				playerPointsString = playerPointsString + currentPoints + "§f point. Play games to win points!";
 			else
 				playerPointsString = playerPointsString + currentPoints + "§f points.";
 			SnowballerMessager.sendMessage(senderPlayer, playerPointsString);
+		} if(command.getName().equalsIgnoreCase("rank")) {
+			if(! (sender instanceof Player)) {
+				SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "You need to be a player to run this command.");
+				return true;
+			} Player senderPlayer = (Player) sender;
+			SnowballerMessager.sendMessage(sender, "You are at rank §a" + Snowballer.ranksManager.getPlayerRank(senderPlayer) + "§f.");
 		}
 
 		return true;

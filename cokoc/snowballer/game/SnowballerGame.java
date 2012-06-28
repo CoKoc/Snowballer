@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -14,13 +15,14 @@ import org.bukkit.entity.Player;
 import com.google.gson.internal.Pair;
 
 import cokoc.snowballer.Snowballer;
-import cokoc.snowballer.managers.AwaitingPlayersManager;
+import cokoc.snowballer.managers.SnowballerAwaitingPlayersManager;
 import cokoc.snowballer.managers.SnowballerChangedNamesManager;
 import cokoc.snowballer.managers.SnowballerKillVerbsManager;
 
 public class SnowballerGame {
+	protected SnowballerAwaitingPlayersManager awaitingPlayers;
 	protected HashMap<String, String> players;
-	protected AwaitingPlayersManager awaitingPlayers;
+	protected HashMap<String, Integer> points;
 	protected ArrayList<String> spectators;
 	protected SnowballerTerrain terrain;
 	private boolean running;
@@ -29,8 +31,9 @@ public class SnowballerGame {
 
 	public SnowballerGame(String host, SnowballerTerrain terrain, String type) {
 		this.players = new HashMap<String, String>();
+		this.points = new HashMap<String, Integer>();
 		this.spectators = new ArrayList<String>();
-		this.awaitingPlayers = new AwaitingPlayersManager();
+		this.awaitingPlayers = new SnowballerAwaitingPlayersManager();
 		this.terrain = terrain;
 		this.type = type;
 		this.host = host;
@@ -69,6 +72,7 @@ public class SnowballerGame {
 
 	public void setup() {
 		ArrayList<Pair<Player, String>> gamePlayers = getWaitingPlayers();
+		points = new HashMap<String, Integer>();
 		running = true;
 		for(int i = 0; i < gamePlayers.size(); ++i) {
 			Player player = gamePlayers.get(i).first;
@@ -77,6 +81,7 @@ public class SnowballerGame {
 			SnowballerInventorySetter.setInventory(player, team);
 			Snowballer.gamesManager.playerQuitGameQueue(player, this);
 			players.put(player.getName(), team);
+			points.put(player.getName(), 0);
 			SnowballerChangedNamesManager.setPlayerDisplayName(player, SnowballerMessager.getStringColor(team) + player.getName() + ChatColor.RESET);
 		} if(! type.equalsIgnoreCase("speedball"))
 			SnowballerMessager.announceToGame(this, "Game started!");
@@ -100,7 +105,19 @@ public class SnowballerGame {
 		running = false;
 		Snowballer.terrainsManager.setOccupied(terrain, false);
 		ArrayList<Player> playersBuffer = getPlayers();
-		for(int i = 0; i < spectators.size(); ++i)
+		Set<String> playerPoints = points.keySet();
+		Iterator<String> it = playerPoints.iterator();
+		while(it.hasNext()) {
+			String currentPlayerName = it.next();
+			int currentPlayerPoints = points.get(currentPlayerName);
+			Snowballer.pointsManager.addPointsToPlayer(currentPlayerName, currentPlayerPoints);
+			Player player = Bukkit.getPlayer(currentPlayerName);
+			if(player != null)
+				if(currentPlayerPoints != 0)
+					SnowballerMessager.sendMessage(player, "You've been awarded §a" + points.get(player.getName()) + "§f points!");
+				else
+					SnowballerMessager.sendMessage(player, "Ho goodness! You didn't score a single point. :S");
+		} for(int i = 0; i < spectators.size(); ++i)
 			Snowballer.gamesManager.playerStopSpectate(getPlayer(spectators.get(i)));
 		for(int i = 0; i < playersBuffer.size(); ++i) {
 			SnowballerInventorySetter.setInventory(playersBuffer.get(i), "default");
@@ -116,7 +133,7 @@ public class SnowballerGame {
 			} removePlayer(playersBuffer.get(i));
 		}
 	}
-
+	
 	public void checkWin() {
 		if(getTeams().size() <= 1) {
 			String teamWinAnnouncement = SnowballerMessager.getColoredString(getTeams().get(0)).toUpperCase() + " team won the game.";
@@ -142,6 +159,23 @@ public class SnowballerGame {
 				SnowballerMessager.broadcast("[§dSpeed§bball§f] " + playerFragAnnouncement);
 			else
 				SnowballerMessager.announceToGame(this, playerFragAnnouncement);
+			target.teleport(Snowballer.terrainsManager.getHubSpawn());
+			SnowballerInventorySetter.setInventory(target, "default");
+			Snowballer.gamesManager.playerQuitGameQueue(target, this);
+			if(type.equalsIgnoreCase("speedball"))
+				addPlayerToQueue(target, getPlayerTeam(target));
+			if(Snowballer.gamesManager.isPlayerAwaiting(target))
+				SnowballerChangedNamesManager.setPlayerDisplayName(target, 
+						SnowballerMessager.getStringColor(Snowballer.gamesManager.getPlayerTeamInGame(target)) + target.getName());
+			removePlayer(target);
+			points.put(killer.getName(), points.get(killer.getName()) + 1);
+			checkWin();
+		}
+	}
+	
+	public void killPlayer(Player target) {
+		if(running) {
+			SnowballerMessager.announceToGame(this, "[§dSpeed§bball§f] " + target.getDisplayName() + " inexpectably killed himself.");
 			target.teleport(Snowballer.terrainsManager.getHubSpawn());
 			SnowballerInventorySetter.setInventory(target, "default");
 			Snowballer.gamesManager.playerQuitGameQueue(target, this);

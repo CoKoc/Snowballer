@@ -3,8 +3,10 @@ package cokoc.snowballer.commands;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -12,6 +14,7 @@ import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import com.google.gson.internal.Pair;
@@ -19,7 +22,9 @@ import com.google.gson.internal.Pair;
 import cokoc.snowballer.Snowballer;
 import cokoc.snowballer.game.SnowballerGame;
 import cokoc.snowballer.game.SnowballerMessager;
+import cokoc.snowballer.game.SnowballerShop;
 import cokoc.snowballer.game.SnowballerTerrain;
+import cokoc.snowballer.utils.Targetter;
 import cokoc.snowballer.utils.TinyLocation;
 
 public class AdminCommandExecutor implements CommandExecutor {
@@ -34,7 +39,7 @@ public class AdminCommandExecutor implements CommandExecutor {
 		if(sender.isOp() || sender.hasPermission("snowballer.admin")) {
 			if(command.getName().equalsIgnoreCase("snow")) {
 				if(! hasAtLeastNArgs(args, 1)) {
-					SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Not enough asd arguments");
+					SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Not enough arguments");
 					return true;
 				}
 
@@ -179,8 +184,7 @@ public class AdminCommandExecutor implements CommandExecutor {
 					if(! (sender instanceof Player)) {
 						SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "You need to be a player to use this command.");
 						return true;
-					}
-					Player senderPlayer = (Player) sender;
+					} Player senderPlayer = (Player) sender;
 					if(! hasAtLeastNArgs(args, 2)) {
 						SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Not enough arguments");
 						return true;
@@ -220,9 +224,7 @@ public class AdminCommandExecutor implements CommandExecutor {
 					if(! hasAtLeastNArgs(args, 2)) {
 						SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Not enough arguments");
 						return true;
-					}
-					String subsubCommand = args[1];
-
+					} String subsubCommand = args[1];
 					if(subsubCommand.equalsIgnoreCase("pool")) {
 						if(! Snowballer.gamesManager.isSpeedball()) {
 							SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "There is no pool because speedball isn't enabled!");
@@ -247,8 +249,7 @@ public class AdminCommandExecutor implements CommandExecutor {
 						if(! hasAtLeastNArgs(args, 3)) {
 							SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Not enough arguments");
 							return true;
-						}
-						Player player = Bukkit.getServer().getPlayer(args[2]);
+						} Player player = Bukkit.getServer().getPlayer(args[2]);
 						if(player != null) {
 							SnowballerGame game = Snowballer.gamesManager.getGameByPlayer(player);
 							if(game != null) {
@@ -273,6 +274,10 @@ public class AdminCommandExecutor implements CommandExecutor {
 							} else {
 								SnowballerMessager.sendMessage(sender, player.getName() + " isn't currently in a game.");
 							}
+							int playerPoints = Snowballer.pointsManager.getPlayerPoints(player.getName());
+							int playerRank = Snowballer.ranksManager.getPlayerRank(player);
+							SnowballerMessager.sendMessage(sender, player.getName() + " has §a" + playerPoints + "§f points.");
+							SnowballerMessager.sendMessage(sender, player.getName() + " is at rank §a" + playerRank + "§f.");
 						} else {
 							SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "That player doesn't exist!");
 						}
@@ -292,9 +297,86 @@ public class AdminCommandExecutor implements CommandExecutor {
 										+ players.get(j).getName();
 								if(j != players.size()-1)
 									gameInfoString = gameInfoString + ", ";
-							}
-							SnowballerMessager.sendMessage(sender, gameInfoString);
+							} SnowballerMessager.sendMessage(sender, gameInfoString);
 						}
+					}
+				} if(subCommand.equalsIgnoreCase("shop")) {
+					if(! (sender instanceof Player)) {
+						SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "You need to be a player to use this command.");
+						return true;
+					} Player senderPlayer = (Player) sender;
+					if(! hasAtLeastNArgs(args, 2)) {
+						SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Not enough arguments");
+						return true;
+					} String subsubCommand = args[1];
+					if(subsubCommand.equalsIgnoreCase("create")) {
+						Entity entity = Targetter.getEntityTarget(senderPlayer);
+						if(entity == null) {
+							SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "You didn't target an entity!");
+							return true;
+						} UUID entityId = entity.getUniqueId();
+						if(! Snowballer.shopsManager.isEntityShop(entityId)) {
+							SnowballerShop shop = new SnowballerShop(entityId);
+							Snowballer.shopsManager.addShop(shop);
+							SnowballerMessager.sendMessage(sender, "You created a new shop at §a " + SnowballerMessager.formatLocation(entity.getLocation()) + " §f!");
+						} else
+							SnowballerMessager.sendMessage(sender, "This entity is already a shop!");
+					} if(subsubCommand.equalsIgnoreCase("delete")) {
+						if(hasAtLeastNArgs(args, 3)) {
+							int entityId = Integer.parseInt(args[2]);
+							if(entityId < Snowballer.shopsManager.shops.size()) {
+								Snowballer.shopsManager.removeShop(entityId);
+							} else
+								SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "There's no shop by that id");
+						} else {
+							if(Targetter.getEntityTarget(senderPlayer) != null) {
+								UUID entityId = Targetter.getEntityTarget(senderPlayer).getUniqueId();
+								if(Snowballer.shopsManager.isEntityShop(entityId)) {
+									Snowballer.shopsManager.removeShop(entityId);
+									SnowballerMessager.sendMessage(sender, "You deleted shop ID §a" + entityId + "§f !");
+								} else {
+									SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "This isn't even a shop!");
+								}
+							} else
+								SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Not enough arguments");
+						}
+					} if(subsubCommand.equalsIgnoreCase("list")) {
+						ArrayList<SnowballerShop> shops = Snowballer.shopsManager.shops;
+						if(shops.size() == 0) {
+							SnowballerMessager.sendMessage(senderPlayer, "There are no registered shops.");
+							return true;
+						} SnowballerMessager.sendMessage(senderPlayer, "The current shops are: ");
+						for(int i = 0; i < shops.size(); ++i) {
+							int relativeId = i;
+							List<Entity> entities = senderPlayer.getWorld().getEntities();
+							Location entityLocation = senderPlayer.getLocation();
+							for(int j = 0; j < entities.size(); ++j)
+								if(entities.get(j).getUniqueId().equals(shops.get(i).entityUID))
+									entityLocation = entities.get(j).getLocation();
+							SnowballerMessager.sendMessage(senderPlayer, "Shop ID " + relativeId + " at " + SnowballerMessager.formatLocation(entityLocation));
+						}
+					}
+				} if(subCommand.equalsIgnoreCase("set")) {
+					if(! hasAtLeastNArgs(args, 2)) {
+						SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Not enough arguments");
+						return true;
+					} String subsubCommand = args[1];
+					if(subsubCommand.equalsIgnoreCase("points")) {
+						if(! hasAtLeastNArgs(args, 4)) {
+							SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Not enough arguments");
+							return true;
+						} String playerName = args[2];
+						int numberOfPoints = Integer.parseInt(args[3]);
+						Snowballer.pointsManager.playerPoints.put(playerName, numberOfPoints);
+						SnowballerMessager.sendMessage(sender, "You've set " + playerName + "'s points to §a" + numberOfPoints);
+					} if(subsubCommand.equalsIgnoreCase("rank")) {
+						if(! hasAtLeastNArgs(args, 4)) {
+							SnowballerMessager.sendMessage(sender, ChatColor.DARK_RED + "ERROR: " + ChatColor.RESET + "Not enough arguments");
+							return true;
+						} String playerName = args[2];
+						int rank = Integer.parseInt(args[3]);
+						Snowballer.ranksManager.setRank(playerName, rank);
+						SnowballerMessager.sendMessage(sender, "You've set " + playerName + "'s rank to §a" + rank);
 					}
 				}
 			}

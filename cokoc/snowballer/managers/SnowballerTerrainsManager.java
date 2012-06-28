@@ -1,9 +1,5 @@
 package cokoc.snowballer.managers;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -13,7 +9,7 @@ import org.bukkit.Location;
 import cokoc.snowballer.game.SnowballerTerrain;
 import cokoc.snowballer.utils.TinyLocation;
 
-public class SnowballerTerrainsManager {
+public class SnowballerTerrainsManager extends SnowballerPersistentManager {
 	private ArrayList<SnowballerTerrain> terrains;
 	private ArrayList<Boolean> occupied;
 	private TinyLocation hubSpawn;
@@ -121,20 +117,5 @@ public class SnowballerTerrainsManager {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	protected void save(Object obj,String path) throws Exception
-	{
-		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(path));
-		oos.writeObject(obj);
-		oos.flush();
-		oos.close();
-	}
-	protected Object load(String path) throws Exception
-	{
-		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path));
-		Object result = ois.readObject();
-		ois.close();
-		return result;
 	}
 }

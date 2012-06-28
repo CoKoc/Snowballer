@@ -18,7 +18,14 @@ public class SnowballerMessager {
 
 	public static void  broadcast(String message) {
 		String messageBuffer = header + ChatColor.RESET + message;
-		Bukkit.getServer().broadcastMessage(messageBuffer);
+		Player[] players = Bukkit.getServer().getOnlinePlayers();
+		for(int i = 0; i < players.length; ++i) {
+			if(players[i].isOp())
+				players[i].sendMessage(messageBuffer);
+			if(!players[i].hasPermission("snowballer.nomessage"))
+				if(! players[i].isOp())
+					players[i].sendMessage(messageBuffer);
+		}
 	}
 
 	public static void announceToGame(SnowballerGame game, String announcement) {

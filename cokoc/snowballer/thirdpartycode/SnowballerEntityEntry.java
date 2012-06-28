@@ -96,6 +96,8 @@ public class SnowballerEntityEntry extends EntityTrackerEntry {
 
 					if(this.tracker instanceof EntityHuman) {
 						EntityHuman entityhuman = (EntityHuman)this.tracker;
+						if(entityhuman.isSleeping())
+							entityplayer.netServerHandler.sendPacket(new Packet17EntityLocationAction(this.tracker, 0, MathHelper.floor(this.tracker.locX), MathHelper.floor(this.tracker.locY), MathHelper.floor(this.tracker.locZ)));
 						if(entityhuman.isSneaking())
 							entityplayer.netServerHandler.sendPacket(new Packet17EntityLocationAction(this.tracker, 0, MathHelper.floor(this.tracker.locX), MathHelper.floor(this.tracker.locY), MathHelper.floor(this.tracker.locZ)));
 					}

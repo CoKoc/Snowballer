@@ -11,10 +11,10 @@ import org.bukkit.entity.Player;
 
 import com.google.gson.internal.Pair;
 
-public class AwaitingPlayersManager {
+public class SnowballerAwaitingPlayersManager {
 	public HashMap<String, String> players;
 
-	public AwaitingPlayersManager() {
+	public SnowballerAwaitingPlayersManager() {
 		players = new HashMap<String, String>();
 	}
 

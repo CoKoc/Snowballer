@@ -14,11 +14,14 @@ import cokoc.snowballer.utils.FileIO;
 import cokoc.snowballer.commands.AdminCommandExecutor;
 import cokoc.snowballer.commands.SnowCommandExecutor;
 import cokoc.snowballer.commands.TeamCommandExecutor;
-import cokoc.snowballer.listeners.SnowballerPlayerListener;
+import cokoc.snowballer.listeners.SnowballerInGameListener;
+import cokoc.snowballer.listeners.SnowballerShopPlayerListener;
 import cokoc.snowballer.managers.SnowballerGamesManager;
 import cokoc.snowballer.managers.SnowballerConfigsManager;
 import cokoc.snowballer.managers.SnowballerKillVerbsManager;
 import cokoc.snowballer.managers.SnowballerPointsManager;
+import cokoc.snowballer.managers.SnowballerRanksManager;
+import cokoc.snowballer.managers.SnowballerShopsManager;
 import cokoc.snowballer.managers.SnowballerTerrainsManager;
 
 public class Snowballer extends JavaPlugin {
@@ -26,6 +29,8 @@ public class Snowballer extends JavaPlugin {
 	public static SnowballerTerrainsManager terrainsManager;
 	public static SnowballerConfigsManager configsManager;
 	public static SnowballerPointsManager pointsManager;
+	public static SnowballerRanksManager ranksManager;
+	public static SnowballerShopsManager shopsManager;
 	public static Snowballer instance;
 
 	public void onEnable() {
@@ -34,13 +39,21 @@ public class Snowballer extends JavaPlugin {
 		terrainsManager = new SnowballerTerrainsManager();
 		gamesManager = new SnowballerGamesManager();
 		pointsManager = new SnowballerPointsManager();
+		ranksManager = new SnowballerRanksManager();
+		shopsManager = new SnowballerShopsManager();
 
 		configsManager.loadConfigs();
 		if(FileIO.checkFileCreate("/Snowballer/", "terrains.bin")) {
 			terrainsManager.loadData();
-		} if(! FileIO.checkFileCreate("/Snowballer/", "points.bin")) {
+		} if(FileIO.checkFileCreate("/Snowballer/", "points.bin")) {
 			pointsManager.loadData();
-		} if(! FileIO.checkFile("/Snowballer/", "killverbs.txt")) {
+		} if(FileIO.checkFileCreate("/Snowballer/", "ranks.bin")) {
+			ranksManager.loadData();
+		} if(FileIO.checkFileCreate("/Snowballer/", "shops.bin")) {
+			shopsManager.loadData();
+		}
+		
+		if(! FileIO.checkFile("/Snowballer/", "killverbs.txt")) {
 			FileIO.copyFile("/Snowballer/", "killverbs.txt", this.getResource("killverbs.txt"));
 		} SnowballerKillVerbsManager.loadMessages();
 
@@ -60,8 +73,11 @@ public class Snowballer extends JavaPlugin {
 		getCommand("snow").setExecutor(new AdminCommandExecutor());
 		getCommand("pool").setExecutor(new SnowCommandExecutor());
 		getCommand("spectate").setExecutor(new SnowCommandExecutor());
+		getCommand("points").setExecutor(new SnowCommandExecutor());
+		getCommand("rank").setExecutor(new SnowCommandExecutor());
 
-		getServer().getPluginManager().registerEvents(new SnowballerPlayerListener(), this);
+		getServer().getPluginManager().registerEvents(new SnowballerInGameListener(), this);
+		getServer().getPluginManager().registerEvents(new SnowballerShopPlayerListener(), this);
 
 		if(Snowballer.configsManager.speedball)
 			gamesManager.startSpeedball();
@@ -79,6 +95,8 @@ public class Snowballer extends JavaPlugin {
 
 		terrainsManager.saveData();
 		pointsManager.saveData();
+		ranksManager.saveData();
+		shopsManager.saveData();
 		gamesManager.stopAllGames();
 	}
 
