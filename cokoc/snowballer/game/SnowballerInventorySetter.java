@@ -59,10 +59,8 @@ public class SnowballerInventorySetter {
 		}
 
 		int numberOfSnowballs = getNumberOfSnowballsByRank(playerRank);
-		if(numberOfSnowballs == -1) {
-			SnowballerMessager.sendMessage(player, "There has been a problem with your snowballs delivery! D:");
+		if(numberOfSnowballs == -1)
 			numberOfSnowballs = 16;
-		}
 		int numberOfStacks = numberOfSnowballs / 16;
 		int remainders = numberOfSnowballs % 16;
 		ItemStack remindingSnowballs = new ItemStack(Material.SNOW_BALL, remainders);

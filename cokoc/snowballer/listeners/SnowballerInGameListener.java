@@ -24,8 +24,11 @@ import cokoc.snowballer.game.SnowballerMessager;
 import cokoc.snowballer.game.SnowballerVanisher;
 import cokoc.snowballer.managers.SnowballerChangedNamesManager;
 import cokoc.snowballer.managers.SnowballerGamesManager;
+import cokoc.translate.PluginHook;
+import cokoc.translate.Translate;
 
 public class SnowballerInGameListener implements Listener {
+	PluginHook t = Translate.getPluginHook(Snowballer.getInstance());
 	@EventHandler(ignoreCancelled = true)
 	public void onSnowballHit(EntityDamageByEntityEvent event) {
 		if(! event.getCause().equals(DamageCause.PROJECTILE))
@@ -65,12 +68,13 @@ public class SnowballerInGameListener implements Listener {
 
 	@EventHandler
 	public void onPlayerDamage(EntityDamageEvent event) {
-		if(Snowballer.configsManager.invinciblePlayers)
-			if(event.getEntity() instanceof Player) {
-				Player player = (Player) event.getEntity();
-				if(Snowballer.gamesManager.isPlayerInGame(player))
-					event.setDamage(0);
-			}
+		if(event.getEntity() instanceof Player) {
+			Player player = (Player) event.getEntity();
+			if(Snowballer.gamesManager.isPlayerInGame(player))
+				event.setDamage(0);
+			else
+				event.setCancelled(true);
+		}
 	}
 
 	@EventHandler
@@ -111,7 +115,7 @@ public class SnowballerInGameListener implements Listener {
 	public void onPlayerDropSnowball(PlayerDropItemEvent event) {
 		if(Snowballer.gamesManager.isPlayerInGame(event.getPlayer())) {
 			if(event.getItemDrop().getItemStack().getType().equals(Material.SNOW_BALL)) {
-				SnowballerMessager.sendMessage(event.getPlayer(), "You can't drop snowballs!");
+				SnowballerMessager.sendMessage(event.getPlayer(), t.s("CANT_DROP_SNOWBALLS"));
 				event.setCancelled(true);
 			}	
 		}

@@ -18,8 +18,11 @@ import cokoc.snowballer.Snowballer;
 import cokoc.snowballer.managers.SnowballerAwaitingPlayersManager;
 import cokoc.snowballer.managers.SnowballerChangedNamesManager;
 import cokoc.snowballer.managers.SnowballerKillVerbsManager;
+import cokoc.translate.PluginHook;
+import cokoc.translate.Translate;
 
 public class SnowballerGame {
+	PluginHook t = Translate.getPluginHook(Snowballer.getInstance());
 	protected SnowballerAwaitingPlayersManager awaitingPlayers;
 	protected HashMap<String, String> players;
 	protected HashMap<String, Integer> points;
@@ -59,9 +62,9 @@ public class SnowballerGame {
 	}
 
 	public boolean isPlayerSpectator(Player player) {
-		if(spectators.contains(player.getName())) {
+		if(spectators.contains(player.getName()))
 			return true;
-		} return false;
+		return false;
 	}
 
 	public void removePlayer(Player player) {
@@ -84,7 +87,7 @@ public class SnowballerGame {
 			points.put(player.getName(), 0);
 			SnowballerChangedNamesManager.setPlayerDisplayName(player, SnowballerMessager.getStringColor(team) + player.getName() + ChatColor.RESET);
 		} if(! type.equalsIgnoreCase("speedball"))
-			SnowballerMessager.announceToGame(this, "Game started!");
+			SnowballerMessager.announceToGame(this, t.s("GAME_STARTED"));
 	}
 
 	public SnowballerTerrain getTerrain() {
@@ -114,9 +117,9 @@ public class SnowballerGame {
 			Player player = Bukkit.getPlayer(currentPlayerName);
 			if(player != null)
 				if(currentPlayerPoints != 0)
-					SnowballerMessager.sendMessage(player, "You've been awarded §a" + points.get(player.getName()) + "§f points!");
+					SnowballerMessager.sendMessage(player, t.s("BEEN_AWARDED") + points.get(player.getName()) + t.s("POINTS_2"));
 				else
-					SnowballerMessager.sendMessage(player, "Ho goodness! You didn't score a single point. :S");
+					SnowballerMessager.sendMessage(player, t.s("DIDNT_SCORE_POINT"));
 		} for(int i = 0; i < spectators.size(); ++i)
 			Snowballer.gamesManager.playerStopSpectate(getPlayer(spectators.get(i)));
 		for(int i = 0; i < playersBuffer.size(); ++i) {
@@ -136,7 +139,7 @@ public class SnowballerGame {
 	
 	public void checkWin() {
 		if(getTeams().size() <= 1) {
-			String teamWinAnnouncement = SnowballerMessager.getColoredString(getTeams().get(0)).toUpperCase() + " team won the game.";
+			String teamWinAnnouncement = SnowballerMessager.getColoredString(getTeams().get(0)).toUpperCase() + t.s("TEAM_WON_GAME");
 			SnowballerMessager.announceToGame(this, teamWinAnnouncement);
 			Snowballer.gamesManager.stopGame(this);
 		}
@@ -149,14 +152,14 @@ public class SnowballerGame {
 			String playerFragAnnouncement = fraggerTeamColor + killer.getDisplayName() + ChatColor.RESET + " ";
 			SnowballerVanisher.playerSeeAllPlayers(target);
 			if(target.isSneaking())
-				playerFragAnnouncement = playerFragAnnouncement + SnowballerKillVerbsManager.getRandomKillVerb() + " " + fraggedTeamColor + target.getDisplayName() + ChatColor.RESET + " while he was hiding!";
+				playerFragAnnouncement = playerFragAnnouncement + SnowballerKillVerbsManager.getRandomKillVerb() + " " + fraggedTeamColor + target.getDisplayName() + ChatColor.RESET + t.s("WHILE_HIDING");
 			else if(target.isSprinting())
-				playerFragAnnouncement = playerFragAnnouncement +SnowballerKillVerbsManager.getRandomKillVerb() + " " + fraggedTeamColor + target.getDisplayName() + ChatColor.RESET + " while he was making a run!";
+				playerFragAnnouncement = playerFragAnnouncement +SnowballerKillVerbsManager.getRandomKillVerb() + " " + fraggedTeamColor + target.getDisplayName() + ChatColor.RESET + t.s("WHILE_RUNNING");
 			else
 				playerFragAnnouncement = playerFragAnnouncement + SnowballerKillVerbsManager.getRandomKillVerb() + " " + fraggedTeamColor + target.getDisplayName() + ChatColor.RESET + "!";
 			killer.getWorld().playEffect(killer.getLocation(), Effect.BLAZE_SHOOT, 0, 2);
 			if(type.equalsIgnoreCase("speedball"))
-				SnowballerMessager.broadcast("[§dSpeed§bball§f] " + playerFragAnnouncement);
+				SnowballerMessager.broadcast(t.s("SPEEDBALL") + playerFragAnnouncement);
 			else
 				SnowballerMessager.announceToGame(this, playerFragAnnouncement);
 			target.teleport(Snowballer.terrainsManager.getHubSpawn());
@@ -175,7 +178,7 @@ public class SnowballerGame {
 	
 	public void killPlayer(Player target) {
 		if(running) {
-			SnowballerMessager.announceToGame(this, "[§dSpeed§bball§f] " + target.getDisplayName() + " inexpectably killed himself.");
+			SnowballerMessager.announceToGame(this, t.s("SPEEDBALL") + target.getDisplayName() + t.s("SUICIDED"));
 			target.teleport(Snowballer.terrainsManager.getHubSpawn());
 			SnowballerInventorySetter.setInventory(target, "default");
 			Snowballer.gamesManager.playerQuitGameQueue(target, this);

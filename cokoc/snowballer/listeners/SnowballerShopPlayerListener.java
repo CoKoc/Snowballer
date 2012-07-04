@@ -57,7 +57,7 @@ public class SnowballerShopPlayerListener implements Listener {
 		if(benefitKey.equalsIgnoreCase("LEATHER_HELMET"))
 			return "a leather helmet";
 		if(benefitKey.equalsIgnoreCase("LEATHER_CHESTPLATE"))
-			return "a leather hat";
+			return "a leather chestplate";
 		if(benefitKey.equalsIgnoreCase("LEATHER_LEGGINGS"))
 			return "a pair of leather leggings";
 		if(benefitKey.equalsIgnoreCase("LEATHER_BOOTS"))
